@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Program - Copy.cs;" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Iso8601DurationHelper" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Azure.Amqp" Version="2.6.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+  </ItemGroup>
+
+</Project>
