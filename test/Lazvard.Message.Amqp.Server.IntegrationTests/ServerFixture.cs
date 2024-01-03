@@ -1,7 +1,6 @@
 ﻿using Iso8601DurationHelper;
 using Lazvard.Message.Cli;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography.X509Certificates;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 

@@ -31,7 +31,7 @@ var server = new Server(nodeFactory, loggerFactory);
 var broker = server.Start(config, certificate);
 
 Console.WriteLine($"Lajvard ServiceBus service is successfully listening at http://{config.IP}:{config.Port}");
-Console.WriteLine ();
+Console.WriteLine();
 Console.Write($"ConnectionString: Endpoint=sb://{config.IP}/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=1");
 Console.WriteLine();
 Console.WriteLine();

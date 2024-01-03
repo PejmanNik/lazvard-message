@@ -1,4 +1,5 @@
-﻿using Lazvard.Message.Amqp.Server.Helpers;
+﻿using Lazvard.Message.Amqp.Server.Constants;
+using Lazvard.Message.Amqp.Server.Helpers;
 using Microsoft.Azure.Amqp;
 using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Extensions.Logging;
@@ -89,7 +90,7 @@ public sealed class Consumer
 
             var state = new Rejected
             {
-                Error = new Error() { Condition = AmqpErrorCode.NotFound }
+                Error = new Error() { Condition = ManagementConstants.Errors.MessageLockLostError }
             };
 
             link.DisposeDelivery(delivery, false, state);
@@ -143,6 +144,7 @@ public sealed class Consumer
         try
         {
             link.SendMessageNoWait(clonedMessage.Value, clonedMessage.Value.DeliveryTag, new ArraySegment<byte>());
+            message.Header.DeliveryCount += 1;
 
             logger.LogTrace("delivered message {MessageSeqNo} to {Link} with DeliveryTag {DeliveryTag}, DeliveryCount {DeliveryCount}",
                 clonedMessage.Value.GetSequenceNumber(), LinkName, clonedMessage.Value.DeliveryTag, clonedMessage.Value.Header.DeliveryCount ?? 0);

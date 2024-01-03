@@ -45,7 +45,7 @@ public class SubscriptionHandler
         logger.LogTrace("attach sending link from source {Address} and link {Link} with Identifier {Identifier}",
             address, link.Name, link.Identifier);
 
-     
+
         if (address is null)
         {
             link.SafeClose(new AmqpException(AmqpErrorCode.InternalError, "The subscription address is not valid."));

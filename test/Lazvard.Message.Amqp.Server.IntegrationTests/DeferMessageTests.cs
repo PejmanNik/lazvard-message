@@ -54,7 +54,7 @@ public class DeferMessageTests : IClientFixture
         Assert.NotNull(deferredMessage);
 
         //can not find the message
-        await Assert.ThrowsAnyAsync<ServiceBusException>(() => receiver2.ReceiveDeferredMessageAsync(messageSequenceNumber));        
+        await Assert.ThrowsAnyAsync<ServiceBusException>(() => receiver2.ReceiveDeferredMessageAsync(messageSequenceNumber));
     }
 
     [Fact]

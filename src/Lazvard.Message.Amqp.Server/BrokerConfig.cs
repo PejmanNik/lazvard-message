@@ -38,5 +38,5 @@ public class BrokerConfig
     public uint ConnectionIdleTimeOut { get; set; } = 4 * 60 * 1000;
     public uint MaxMessageSize { get; set; } = 64 * 1024 * 1024;
 
-    public IEnumerable<TopicConfig> Topics { get; set; } = Array.Empty<TopicConfig>();    
+    public IEnumerable<TopicConfig> Topics { get; set; } = Array.Empty<TopicConfig>();
 }

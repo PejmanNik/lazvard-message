@@ -206,13 +206,13 @@ public sealed class Configuration
             result.CertificatePath = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePath)].AsString;
             result.CertificatePassword = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePassword)].AsString;
 
-            result.ConnectionIdleTimeOut = (uint?)config[ConfigurationSections.AMQP][nameof(BrokerConfig.ConnectionIdleTimeOut)]?.AsInteger 
+            result.ConnectionIdleTimeOut = (uint?)config[ConfigurationSections.AMQP][nameof(BrokerConfig.ConnectionIdleTimeOut)]?.AsInteger
                 ?? result.ConnectionIdleTimeOut;
-            
-            result.MaxFrameSize = (uint?)config[ConfigurationSections.AMQP][nameof(BrokerConfig.MaxFrameSize)]?.AsInteger 
+
+            result.MaxFrameSize = (uint?)config[ConfigurationSections.AMQP][nameof(BrokerConfig.MaxFrameSize)]?.AsInteger
                 ?? result.MaxFrameSize;
-            
-            result.MaxMessageSize = (uint?)config[ConfigurationSections.AMQP][nameof(BrokerConfig.MaxMessageSize)]?.AsInteger 
+
+            result.MaxMessageSize = (uint?)config[ConfigurationSections.AMQP][nameof(BrokerConfig.MaxMessageSize)]?.AsInteger
                 ?? result.MaxMessageSize;
 
             var defaultTopicConf = new TopicSubscriptionConfig("");
@@ -223,9 +223,9 @@ public sealed class Configuration
                 {
                     new TopicSubscriptionConfig(string.Empty)
                     {
-                        LockDuration = Duration.Parse(q[nameof(TopicSubscriptionConfig.LockDuration)]?.AsString 
+                        LockDuration = Duration.Parse(q[nameof(TopicSubscriptionConfig.LockDuration)]?.AsString
                             ?? defaultTopicConf.LockDuration.ToString()),
-                        MaxDeliveryCount = q[nameof(TopicSubscriptionConfig.MaxDeliveryCount)]?.AsInteger 
+                        MaxDeliveryCount = q[nameof(TopicSubscriptionConfig.MaxDeliveryCount)]?.AsInteger
                             ?? defaultTopicConf.MaxDeliveryCount,
                     }
                 })
@@ -241,9 +241,9 @@ public sealed class Configuration
                         .Children
                         .Select(s => new TopicSubscriptionConfig(s[nameof(TopicSubscriptionConfig.Name)].AsString)
                         {
-                            LockDuration = Duration.Parse(s[nameof(TopicSubscriptionConfig.LockDuration)]?.AsString 
+                            LockDuration = Duration.Parse(s[nameof(TopicSubscriptionConfig.LockDuration)]?.AsString
                                 ?? defaultTopicConf.LockDuration.ToString()),
-                            MaxDeliveryCount = s[nameof(TopicSubscriptionConfig.MaxDeliveryCount)]?.AsInteger 
+                            MaxDeliveryCount = s[nameof(TopicSubscriptionConfig.MaxDeliveryCount)]?.AsInteger
                                 ?? defaultTopicConf.MaxDeliveryCount,
                         });
 

@@ -51,7 +51,7 @@ public class CliStartup
         {
             Console.WriteLine($"Can't load the certificate. please check the certificate or removed the certificatePath from config file");
             Console.WriteLine($"Error: {cert.Error}");
-            
+
             Environment.Exit(0);
         }
 

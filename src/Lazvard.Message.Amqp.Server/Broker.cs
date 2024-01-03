@@ -126,7 +126,7 @@ public partial class Broker : IRuntimeProvider
                  ((Target)link.Settings.Target).Address :
                  ((Source)link.Settings.Source).Address)
                  ?? throw new AmqpException(AmqpErrorCode.InvalidField, "Address not set");
-            
+
             string nodeName = AddressParser.Parse(address.ToString()).Node;
             if (!nodes.TryGetValue(nodeName, out var node))
             {

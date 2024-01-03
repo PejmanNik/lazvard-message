@@ -35,17 +35,19 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
     private readonly IExpirationList expirationList;
     private readonly ILogger<MessageQueue> logger;
     private readonly Duration lockDuration;
+    private readonly Duration timeToLive;
     private readonly IMessageQueue? deadletterQueue;
     private long sequenceNo = 0;
 
-    public MessageQueue(Duration lockDuration, CancellationToken stopToken, IMessageQueue? deadletterQueue, ILoggerFactory loggerFactory)
+    public MessageQueue(TopicSubscriptionConfig topicSubscriptionConfig, CancellationToken stopToken, IMessageQueue? deadletterQueue, ILoggerFactory loggerFactory)
     {
         items = new();
         sendQueue = new();
         semaphore = new(1);
         expirationList = new ExpirationList(lockDuration.ToTimeSpan() / 2, OnLockExpiration, stopToken);
         logger = loggerFactory.CreateLogger<MessageQueue>();
-        this.lockDuration = lockDuration;
+        lockDuration = topicSubscriptionConfig.LockDuration;
+        timeToLive = topicSubscriptionConfig.TimeToLive;
         this.deadletterQueue = deadletterQueue;
     }
 
@@ -68,8 +70,16 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
 
         var messageSeqNo = Interlocked.Increment(ref sequenceNo);
 
-        clonedMessage.MessageAnnotations ??= new();
-        clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.SequenceNumberName] = messageSeqNo;
+        clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.SequenceNumber] = messageSeqNo;
+        clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.EnqueueSequenceNumber] = messageSeqNo;
+        clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.EnqueuedTime] = DateTime.UtcNow;
+        clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.MessageState] = (int)MessageState.Active;
+
+        clonedMessage.Header.DeliveryCount ??= 0;
+        clonedMessage.Properties.MessageId ??= Guid.NewGuid();
+        clonedMessage.Properties.AbsoluteExpiryTime = DateTime.UtcNow + timeToLive;
+        clonedMessage.Properties.CreationTime = DateTime.UtcNow;
+        clonedMessage.Header.Ttl = Convert.ToUInt32(timeToLive.ToTimeSpan().TotalSeconds);
 
         var brokerMessage = new BrokerMessage(clonedMessage);
         items.TryAdd(messageSeqNo, brokerMessage);
@@ -116,7 +126,8 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
 
         var clonedMessage = lockedMessage.Message.Clone(true);
         clonedMessage.DeliveryTag = new ArraySegment<byte>(lockToken.ToByteArray());
-        clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.LockedUntilName] = lockedUntil;
+        clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.LockedUntil] = lockedUntil;
+        clonedMessage.DeliveryAnnotations.Map[AmqpMessageConstants.LockToken] = lockToken;
 
         logger.LogTrace("add lock {LockId} until {LockedUntil} for message {MessageSeqNo}",
             lockToken, lockedUntil.Ticks, message.SequenceNumber);
@@ -225,6 +236,9 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
     {
         var message = expirationList.TryRemove(lockToken, linkName);
         if (!message.IsSuccess) return false;
+
+        var deferredMessage = message.Value.Defer();
+        deferredMessage.Message.MessageAnnotations.Map[AmqpMessageConstants.MessageState] = (int)MessageState.Deferred;
 
         Replace(message.Value.Defer());
         return true;

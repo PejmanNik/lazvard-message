@@ -37,7 +37,7 @@ public sealed class Subscription : SubscriptionBase
             delivered = consumer.TryToDeliver(message);
 
             logger.LogTrace("delivering message {MessageSeqNo} in subscription {Subscription} to consumer {Link} was {Status}",
-             message.GetTraceId(), Name,"", delivered ? "Successful" : "Failed");
+             message.GetTraceId(), Name, "", delivered ? "Successful" : "Failed");
 
             if (delivered)
                 break;

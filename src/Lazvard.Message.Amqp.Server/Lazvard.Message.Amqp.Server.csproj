@@ -2,9 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>lightweight AMQP server</Title>
+    <Description>lightweight AMQP server - Azure Service Bus simulator</Description>
+    <Copyright>Pejman Nikram</Copyright>
+    <PackageProjectUrl>https://github.com/PejmanNik/lazvard-message</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/PejmanNik/lazvard-message</RepositoryUrl>
+    <PackageTags>amqp;service-bus;azure-service-bus;amqp-server</PackageTags>
+    <Authors>pejmanNik</Authors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,8 +21,8 @@
 
   <ItemGroup>
     <PackageReference Include="Iso8601DurationHelper" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Azure.Amqp" Version="2.6.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Azure.Amqp" Version="2.6.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

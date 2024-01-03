@@ -12,7 +12,7 @@ static class AmqpMessageExtension
     public static long GetSequenceNumber(this AmqpMessage message)
     {
         message.MessageAnnotations.Map.TryGetValue(
-            AmqpMessageConstants.SequenceNumberName,
+            AmqpMessageConstants.SequenceNumber,
             out object val);
 
         return (long?)val ?? 0;
@@ -61,17 +61,29 @@ static class AmqpMessageExtension
                 cloned.Header.FirstAcquirer = message.Header.FirstAcquirer;
                 cloned.Header.DeliveryCount = message.Header.DeliveryCount;
             }
+            else
+            {
+                properties[nameof(AmqpMessage.Header)].SetValue(cloned, new Header());
+            }
 
             if (message.DeliveryAnnotations != null)
             {
                 properties[nameof(AmqpMessage.DeliveryAnnotations)].SetValue(cloned, new DeliveryAnnotations());
                 cloned.DeliveryAnnotations.Map.Merge(message.DeliveryAnnotations.Map);
             }
+            else
+            {
+                properties[nameof(AmqpMessage.DeliveryAnnotations)].SetValue(cloned, new DeliveryAnnotations());
+            }
 
             if (message.MessageAnnotations != null)
             {
                 properties[nameof(AmqpMessage.MessageAnnotations)].SetValue(cloned, new MessageAnnotations());
                 cloned.MessageAnnotations.Map.Merge(message.MessageAnnotations.Map);
+            }
+            else
+            {
+                properties[nameof(AmqpMessage.MessageAnnotations)].SetValue(cloned, new MessageAnnotations());
             }
 
             if (message.ApplicationProperties != null)
@@ -97,6 +109,10 @@ static class AmqpMessageExtension
                 cloned.Properties.GroupId = message.Properties.GroupId;
                 cloned.Properties.GroupSequence = message.Properties.GroupSequence;
                 cloned.Properties.ReplyToGroupId = message.Properties.ReplyToGroupId;
+            }
+            else
+            {
+                properties[nameof(AmqpMessage.Properties)].SetValue(cloned, new Properties());
             }
 
             if (message.Footer != null)

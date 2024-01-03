@@ -29,7 +29,7 @@ public sealed class Publisher
             {
                 link.RejectMessage(message, new AmqpException(AmqpErrorCode.NotAllowed,
                     $"Can't find the reply link with address '{message.Properties.ReplyTo}'"));
-                
+
                 return;
             }
 

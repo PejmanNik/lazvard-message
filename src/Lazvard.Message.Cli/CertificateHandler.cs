@@ -19,7 +19,7 @@ public static class CertificateHandler
         catch (Exception e)
         {
             return Result.Fail(e.Message);
-        }        
+        }
     }
 
     public static Result CreateAndTrustCertificate(string serverIp, string password)
@@ -29,7 +29,7 @@ public static class CertificateHandler
 
         var sanBuilder = new SubjectAlternativeNameBuilder();
         sanBuilder.AddIpAddress(IPAddress.Parse(serverIp));
-        sanBuilder.AddDnsName("localhost");        
+        sanBuilder.AddDnsName("localhost");
         req.CertificateExtensions.Add(sanBuilder.Build());
 
         var cert = req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));

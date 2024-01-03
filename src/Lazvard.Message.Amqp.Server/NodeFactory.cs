@@ -19,11 +19,11 @@ public class NodeFactory
         var consumerFactory = new ConsumerFactory(loggerFactory);
 
         var deadletterConfig = new TopicSubscriptionConfig($"{config.Name}/{SubscriptionConstants.DeadletterQueue}");
-        var deadletterMessageQueue = new MessageQueue(config.LockDuration, stopToken, null, loggerFactory);
+        var deadletterMessageQueue = new MessageQueue(config, stopToken, null, loggerFactory);
         var deadletterQueue = new Subscription(deadletterConfig, deadletterMessageQueue, consumerFactory, loggerFactory, stopToken);
         yield return deadletterQueue;
 
-        var messageQueue = new MessageQueue(config.LockDuration, stopToken, deadletterMessageQueue, loggerFactory);
+        var messageQueue = new MessageQueue(config, stopToken, deadletterMessageQueue, loggerFactory);
         var subscription = new Subscription(config, messageQueue, consumerFactory, loggerFactory, stopToken);
         yield return subscription;
 
@@ -31,7 +31,7 @@ public class NodeFactory
         yield return new ManagementSubscription(
             messageQueue,
             managementConfig,
-            new MessageQueue(config.LockDuration, stopToken, null, loggerFactory),
+            new MessageQueue(config, stopToken, null, loggerFactory),
             consumerFactory,
             loggerFactory,
             stopToken);
@@ -47,7 +47,7 @@ public class NodeFactory
 
     public virtual IEnumerable<INode> Create(BrokerConfig config)
     {
-        return config.Topics.Select(CreateNode)           
+        return config.Topics.Select(CreateNode)
             .Append(new CbsNode(loggerFactory));
     }
 }
