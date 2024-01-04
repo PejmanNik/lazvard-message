@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        rid: [win-x64, linux-x64, linux-arm, osx-x64, osx-arm64]
+    name: Build for ${{ matrix.rid }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.x"
+
+      - name: publish app for ${{ matrix.rid }}
+        run: dotnet publish src/Lazvard.Message.Cli -r ${{ matrix.rid }} -c Release -o ./publish /p:DebugType=None /p:DebugSymbols=false
+
+      - name: Archive release for ${{ matrix.rid }}
+        uses: thedoctor0/zip-release@0.7.5
+        with:
+          type: "zip"
+          directory: "./publish/"
+          filename: "${{ matrix.rid }}.zip"
+          path: "."
+
+      - name: Push ${{ matrix.rid }}.zip to release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "./publish/${{ matrix.rid }}.zip"
+          allowUpdates: true
+          draft: true
+
+  nuget:
+    runs-on: ubuntu-latest
+    name: Nuget Push
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.x"
+      - name: build app
+        run: dotnet build src/Lazvard.Message.Amqp.Server -c Release -o ./publish/
+      - name: Nuget Push
+        run: dotnet nuget push ./publish/*.nupkg -k ${{ secrets.NUGET_TOKEN }} -s https://api.nuget.org/v3/index.json

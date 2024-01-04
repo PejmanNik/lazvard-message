@@ -17,6 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lazvard.Message.Amqp.Server
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FEAC555A-EA5F-4813-B9EB-9EBF8D6B491B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{094C19EA-E8C8-456F-A200-619290E81A7F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{13223C72-2C00-4132-A551-20DD1A2CB460}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\release.yml = .github\workflows\release.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +64,7 @@ Global
 		{81266284-C5AF-4BDC-958F-E4453DB5B4C7} = {FEAC555A-EA5F-4813-B9EB-9EBF8D6B491B}
 		{5F8F6832-1B7F-4DCE-8B71-F21EDDBCD6A6} = {3A44C183-D3A7-4CA9-8DD5-80820CF1554D}
 		{CC8E4973-E5DD-49A4-BE1C-8E6D85FBDA47} = {3A44C183-D3A7-4CA9-8DD5-80820CF1554D}
+		{13223C72-2C00-4132-A551-20DD1A2CB460} = {094C19EA-E8C8-456F-A200-619290E81A7F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D4EE5258-D519-4C5C-A03E-02B072688EF2}

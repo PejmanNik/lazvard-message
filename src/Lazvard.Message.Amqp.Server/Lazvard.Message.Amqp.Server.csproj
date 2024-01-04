@@ -12,11 +12,21 @@
     <PackageProjectUrl>https://github.com/PejmanNik/lazvard-message</PackageProjectUrl>
     <RepositoryUrl>https://github.com/PejmanNik/lazvard-message</RepositoryUrl>
     <PackageTags>amqp;service-bus;azure-service-bus;amqp-server</PackageTags>
-    <Authors>pejmanNik</Authors>
+    <Authors>Pejman Nikram</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Program - Copy.cs;" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
