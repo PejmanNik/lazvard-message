@@ -7,17 +7,17 @@ You need to have .NET 8 installed on your operating system to run this project. 
 
 
 Since this application is not signed, you may encounter issues running it. The simplest way to run the project is to clone and build it on your operating system:
-`
+```
 git clone https://github.com/PejmanNik/lazvard-message.git
 cd lazvard-message
 dotnet run --project ./src/Lazvard.Message.Cli
-`
+```
 
-Alternatively, you can download the latest version of Lazvard from the release page. At least on Windows, you will need to manually trust the application in Microsoft's SmartScreen upon first run.
+Alternatively, you can download the latest version of Lazvard from the release page. At least on Windows, you will need to manually trust the application in Microsoft's SmartScreen upon the first run.
 
-`
-wget https://github.com/PejmanNik/lazvard-message/releases/download/v0.1.0/win-x64.zip
-`
+```
+wget -O ./lazvard.zip https://github.com/PejmanNik/lazvard-message/releases/download/v0.2.1/win-x64.zip
+```
 
 The application will create a default config file if it's not found on the first run. This config file is in TOML format. Before running Lazvard, you need to define all the queues, topics, and subscriptions in the config file. The AMQP server requires a valid and trusted X.509 certificate (PFX - PKCS #12). On Windows and macOS, the application can create and trust certificates (powered by dotnet dev-certs). However, for Linux, you will need to manually set the certificate as trusted.
 
