@@ -33,7 +33,7 @@ public class TopicConfig
 public class BrokerConfig
 {
     public int Port { get; set; } = AmqpConstants.DefaultSecurePort;
-    public string IP { get; set; } = "127.0.0.1";
+    public string IP { get; set; } = "localhost";
     public uint MaxFrameSize { get; set; } = 64 * 1024;
     public uint ConnectionIdleTimeOut { get; set; } = 4 * 60 * 1000;
     public uint MaxMessageSize { get; set; } = 64 * 1024 * 1024;

@@ -10,7 +10,6 @@ internal sealed class ServerFixture : IDisposable
 {
     private readonly Broker broker;
     private readonly CancellationTokenSource source;
-    private const string certificatePassword = "P@55w0rd";
 
     public ServerFixture(IMessageSink testOutputHelper)
     {
@@ -39,11 +38,11 @@ internal sealed class ServerFixture : IDisposable
             },
         };
 
-        var cert = CertificateHandler.ReadCertificate(CertificateHandler.Path, certificatePassword);
+        var cert = CertificateHandler.ReadCertificateFromStore();
         if (!cert.IsSuccess)
         {
-            CertificateHandler.CreateAndTrustCertificate("127.0.0.1", certificatePassword);
-            cert = CertificateHandler.ReadCertificate(CertificateHandler.Path, certificatePassword);
+            CertificateHandler.CreateAndTrustCertificate();
+            cert = CertificateHandler.ReadCertificateFromStore();
         }
 
         if (!cert.IsSuccess)

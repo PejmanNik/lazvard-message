@@ -7,6 +7,7 @@ namespace Lazvard.Message.Cli;
 
 public class CliConfig : BrokerConfig
 {
+    public bool UseBuiltInCertificateManager { get; set; } = true;
     public string CertificatePath { get; set; } = string.Empty;
     public string CertificatePassword { get; set; } = string.Empty;
 }
@@ -41,10 +42,15 @@ public sealed class Configuration
                     Value = config.Port,
                     Comment = "Port to listen on"
                 },
+                [nameof(CliConfig.UseBuiltInCertificateManager)] = new TomlString
+                {
+                    Value = config.CertificatePath,
+                    Comment = "Use built-in certificate manager (dotnet dev-certs) instead of CertificatePath"
+                },
                 [nameof(CliConfig.CertificatePath)] = new TomlString
                 {
                     Value = config.CertificatePath,
-                    Comment = "The path to trusted X.509 certificate (PFX - PKCS #12)"
+                    Comment = "The path to trusted X.509 certificate (PFX - PKCS #12), required only when UseBuiltInCertificateManager is false"
                 },
                 [nameof(CliConfig.CertificatePassword)] = new TomlString
                 {
@@ -151,12 +157,10 @@ public sealed class Configuration
         };
     }
 
-    public static async Task CreateDefaultConfigAsync(string certificatePath, string certificatePassword)
+    public static async Task CreateDefaultConfigAsync()
     {
         var config = new CliConfig
         {
-            CertificatePath = certificatePath,
-            CertificatePassword = certificatePassword,
             Topics = new TopicConfig[]
             {
                 new TopicConfig("topic-1", new[]

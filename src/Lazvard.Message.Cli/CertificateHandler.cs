@@ -1,20 +1,24 @@
 ﻿using Lazvard.Message.Amqp.Server.Helpers;
-using Lazvard.Message.Cli.CertificateGeneration;
-using System.Net;
-using System.Security.Cryptography;
+using Microsoft.AspNetCore.Certificates.Generation;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Lazvard.Message.Cli;
 
 public static class CertificateHandler
 {
-    public const string Path = "certificate.pfx";
+    private const string oidFriendlyName = "Lazvard Message HTTPS development certificate";
 
-    public static Result<X509Certificate2> ReadCertificate(string path, string password)
+    static CertificateHandler()
+    {
+        CertificateManager.AspNetHttpsOidFriendlyName = oidFriendlyName;
+    }
+
+    public static Result<X509Certificate2> ReadCertificateFromFile(string path, string password)
     {
         try
         {
-            return new X509Certificate2(Path, password);
+            return new X509Certificate2(path, password);
         }
         catch (Exception e)
         {
@@ -22,31 +26,56 @@ public static class CertificateHandler
         }
     }
 
-    public static Result CreateAndTrustCertificate(string serverIp, string password)
+    public static Result<X509Certificate2> ReadCertificateFromStore()
     {
-        var rsaKey = RSA.Create(2048);
-        var req = new CertificateRequest("cn=localhost", rsaKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-
-        var sanBuilder = new SubjectAlternativeNameBuilder();
-        sanBuilder.AddIpAddress(IPAddress.Parse(serverIp));
-        sanBuilder.AddDnsName("localhost");
-        req.CertificateExtensions.Add(sanBuilder.Build());
-
-        var cert = req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));
-
-        //Create PFX(PKCS #12) with private key
-        File.WriteAllBytes(Path, cert.Export(X509ContentType.Pfx, password));
-
-        if (!OperatingSystem.IsWindows() && !OperatingSystem.IsMacOS())
-        {
-            return Result.Success();
-        }
-
-        var manager = CertificateManager.Instance;
         try
         {
-            manager.TrustCertificate(cert);
-            return Result.Success();
+            var cert = CertificateManager.Instance
+                .ListCertificates(StoreName.My, StoreLocation.CurrentUser, isValid: true, requireExportable: false)
+                .FirstOrDefault();
+
+            if (cert is null)
+            {
+                return Result.Fail();
+            }
+
+            var status = CertificateManager.Instance.CheckCertificateState(cert, interactive: false);
+            if (!status.Success)
+            {
+                return Result.Fail();
+            }
+
+            if (!CertificateManager.Instance.IsTrusted(cert))
+            {
+                return Result.Fail();
+            }
+
+            return cert;
+        }
+        catch (Exception e)
+        {
+            return Result.Fail(e.Message);
+        }
+    }
+
+    public static Result CreateAndTrustCertificate()
+    {
+        try
+        {
+            var manager = CertificateManager.Instance;
+            var now = DateTimeOffset.Now;
+            var result = manager.EnsureAspNetCoreHttpsDevelopmentCertificate(
+                notBefore: now,
+                notAfter: now.AddYears(1),
+                isInteractive: false,
+                trust: !RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
+
+            if (result == EnsureCertificateResult.Succeeded 
+                || result == EnsureCertificateResult.NewHttpsCertificateTrusted
+                || result == EnsureCertificateResult.ExistingHttpsCertificateTrusted)
+                return Result.Success();
+
+            return Result.Fail(result.ToString());
         }
         catch (Exception)
         {
