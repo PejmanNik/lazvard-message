@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PublishSingleFile>true</PublishSingleFile>
-	<SelfContained>true</SelfContained>  
+	<SelfContained>false</SelfContained>  
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <SignAssembly>False</SignAssembly>
@@ -20,9 +20,9 @@
     <Authors>Pejman Nikram</Authors>
     <Description>lightweight AMQP server - Azure Service Bus simulator</Description>
     <PackageTags>amqp;service-bus;azure-service-bus;amqp-server</PackageTags>
-    <Version>0.1.0</Version>
-    <AssemblyVersion>0.1.0</AssemblyVersion>
-    <FileVersion>0.1.0</FileVersion>
+    <Version>0.2.1</Version>
+    <AssemblyVersion>0.2.1</AssemblyVersion>
+    <FileVersion>0.2.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

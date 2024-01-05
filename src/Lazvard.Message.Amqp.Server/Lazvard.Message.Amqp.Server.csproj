@@ -15,12 +15,8 @@
     <Authors>Pejman Nikram</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
-    <Version>1.1.0</Version>
+    <Version>1.2.1</Version>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Program - Copy.cs;" />
-  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md">

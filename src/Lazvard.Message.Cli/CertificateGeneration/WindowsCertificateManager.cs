@@ -1,11 +1,14 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Lazvard.Message.Cli.CertificateGeneration;
+namespace Microsoft.AspNetCore.Certificates.Generation;
 
 [SupportedOSPlatform("windows")]
 internal sealed class WindowsCertificateManager : CertificateManager
@@ -29,10 +32,10 @@ internal sealed class WindowsCertificateManager : CertificateManager
         return true;
 #else
         using var key = c.GetRSAPrivateKey();
-        return key is RSACryptoServiceProvider rsaPrivateKey &&
-                rsaPrivateKey.CspKeyContainerInfo.Exportable ||
-            key is RSACng cngPrivateKey &&
-                cngPrivateKey.Key.ExportPolicy == CngExportPolicies.AllowExport;
+        return (key is RSACryptoServiceProvider rsaPrivateKey &&
+                rsaPrivateKey.CspKeyContainerInfo.Exportable) ||
+            (key is RSACng cngPrivateKey &&
+                cngPrivateKey.Key.ExportPolicy == CngExportPolicies.AllowExport);
 #endif
     }
 
