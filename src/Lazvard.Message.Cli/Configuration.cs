@@ -21,11 +21,13 @@ internal static class ConfigurationSections
 
 public sealed class Configuration
 {
-    private const string path = "config.toml";
+    private const string defaultName = "config.toml";
+    private static readonly string userConfigPath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".lazvard");
 
     public static async Task WriteAsync(CliConfig config)
     {
-        using StreamWriter writer = File.CreateText(path);
+        using StreamWriter writer = File.CreateText(defaultName);
 
         var toml = new TomlTable()
         {
@@ -182,23 +184,42 @@ public sealed class Configuration
         await WriteAsync(config);
     }
 
-    public static bool Exists()
+    public static (string path, bool exists) GetConfigPath(string? inputConfigPath)
     {
-        return File.Exists(path);
-    }
-
-    public static Result<CliConfig> Read()
-    {
-        if (!Exists())
+        if (!string.IsNullOrEmpty(inputConfigPath))
         {
-            return Result.Fail("can't find the file.");
+            return (inputConfigPath, File.Exists(inputConfigPath));
+        }
+        if (File.Exists(defaultName))
+        {
+            return (defaultName, true);
+        }
+        if (File.Exists(Path.Combine(userConfigPath, defaultName)))
+        {
+            return (Path.Combine(userConfigPath, defaultName), true);
         }
 
+        return (defaultName, false);
+    }
+
+    public static bool Exists(string? configPath)
+    {
+        if (!string.IsNullOrEmpty(configPath))
+        {
+            return File.Exists(configPath);
+        }
+
+        return File.Exists(defaultName)
+            || File.Exists(Path.Combine(userConfigPath, defaultName));
+    }
+
+    public static Result<CliConfig> Read(string path)
+    {
         using var configFile = File.OpenText(path);
         var config = TOML.Parse(configFile);
         if (config is null)
         {
-            return Result.Fail("file is not a valid Toml.");
+            return Result.Fail("file is not a valid TOML.");
         }
 
         try
