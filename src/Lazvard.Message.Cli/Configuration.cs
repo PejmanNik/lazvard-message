@@ -228,6 +228,7 @@ public sealed class Configuration
 
             result.IP = config[ConfigurationSections.Server][nameof(BrokerConfig.IP)]?.AsString ?? result.IP;
             result.Port = config[ConfigurationSections.Server][nameof(BrokerConfig.Port)]?.AsInteger ?? result.Port;
+            result.UseBuiltInCertificateManager = config[ConfigurationSections.Server][nameof(CliConfig.UseBuiltInCertificateManager)].AsBoolean ?? result.UseBuiltInCertificateManager;
             result.CertificatePath = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePath)].AsString;
             result.CertificatePassword = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePassword)].AsString;
 
