@@ -37,9 +37,11 @@ public static class CommandHandler
         Console.WriteLine($"Lajvard ServiceBus service is successfully listening at http://{config.IP}:{config.Port}");
         Console.WriteLine();
 
-        var connectionStringPanel = new Panel($"ConnectionString: Endpoint=sb://{config.IP}/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=1");
-        connectionStringPanel.Border = BoxBorder.Double;
-        connectionStringPanel.Padding = new Padding(1, 1, 1, 1);
+        var connectionStringPanel = new Panel($"ConnectionString: Endpoint=sb://{config.IP}{(!config.UseHttps ? $":{config.Port}" : string.Empty)}/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=1;UseDevelopmentEmulator=true;")
+        {
+            Border = BoxBorder.Double,
+            Padding = new Padding(1, 1, 1, 1)
+        };
         AnsiConsole.Write(connectionStringPanel);
         AnsiConsole.WriteLine();
 

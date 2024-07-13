@@ -11,7 +11,7 @@ public class AMQPServerParameters(string? configPath)
 
 public class AMQPServerHandler
 {
-    public static async Task<(CliConfig, X509Certificate2)> StartAsync(AMQPServerParameters parameters)
+    public static async Task<(CliConfig, X509Certificate2?)> StartAsync(AMQPServerParameters parameters)
     {
         var (configPath, configExists) = Configuration.GetConfigPath(parameters.ConfigPath);
         if (!configExists && !string.IsNullOrEmpty(parameters.ConfigPath))
@@ -29,19 +29,23 @@ public class AMQPServerHandler
             await Configuration.CreateDefaultConfigAsync();
             AnsiConsole.WriteLine("default config file successfully created!");
 
-            var certificateStoreResult = CertificateHandler.ReadCertificateFromStore();
-            if (!certificateStoreResult.IsSuccess)
+            AnsiConsole.WriteLine("The latest version of the Azure SDK no longer requires an HTTPS connection for the local server.");
+            if (AnsiConsole.Confirm("Do you want to use Https?", false))
             {
-                AnsiConsole.WriteLine();
-                AnsiConsole.WriteLine("ServiceBus needs a valid certificate to start HTTPs server.");
-                AnsiConsole.WriteLine("You can add the certificate info in the config file,");
-                AnsiConsole.WriteLine("or create a new certificate using built-in certificate manager (powered by dotnet dev-certs)");
-                AnsiConsole.WriteLine();
-
-                var addCertificateResult = AddCertificate();
-                if (!addCertificateResult.IsSuccess)
+                var certificateStoreResult = CertificateHandler.ReadCertificateFromStore();
+                if (!certificateStoreResult.IsSuccess)
                 {
-                    Environment.Exit(0);
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.WriteLine("ServiceBus needs a valid certificate to start HTTPs server.");
+                    AnsiConsole.WriteLine("You can add the certificate info in the config file,");
+                    AnsiConsole.WriteLine("or create a new certificate using built-in certificate manager (powered by dotnet dev-certs)");
+                    AnsiConsole.WriteLine();
+
+                    var addCertificateResult = AddCertificate();
+                    if (!addCertificateResult.IsSuccess)
+                    {
+                        Environment.Exit(0);
+                    }
                 }
             }
         }
@@ -54,21 +58,26 @@ public class AMQPServerHandler
             Environment.Exit(0);
         }
 
-        var cert = ReadCertificate(
-            config.Value.UseBuiltInCertificateManager,
-            config.Value.CertificatePath,
-            config.Value.CertificatePassword);
-
-        if (!cert.IsSuccess)
+        if (config.Value.UseHttps)
         {
-            AnsiConsole.MarkupLine($"[red]Can't load the certificate. please check the certificate or use the built-in certificate manager[/]");
-            AnsiConsole.MarkupLine($"[red]In order to troubleshoot the built-in certificate manager please use dotnet dev-certs documentation[/]");
-            AnsiConsole.MarkupLine($"[red]Error: {cert.Error}[/]");
+            var cert = ReadCertificate(
+                config.Value.UseBuiltInCertificateManager,
+                config.Value.CertificatePath,
+                config.Value.CertificatePassword);
 
-            Environment.Exit(0);
+            if (!cert.IsSuccess)
+            {
+                AnsiConsole.MarkupLine($"[red]Can't load the certificate. please check the certificate or use the built-in certificate manager[/]");
+                AnsiConsole.MarkupLine($"[red]In order to troubleshoot the built-in certificate manager please use dotnet dev-certs documentation[/]");
+                AnsiConsole.MarkupLine($"[red]Error: {cert.Error}[/]");
+
+                Environment.Exit(0);
+            }
+
+            return (config.Value, cert.Value);
         }
 
-        return (config.Value, cert.Value);
+        return (config.Value, null);
     }
 
     private static Result<X509Certificate2> ReadCertificate(

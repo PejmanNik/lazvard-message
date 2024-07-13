@@ -15,10 +15,10 @@ internal sealed class ServerFixture : IDisposable
     {
         source = new CancellationTokenSource();
 
-        var config = new BrokerConfig()
+        var config = new CliConfig()
         {
-            Topics = new[]
-            {
+            Topics =
+            [
                 new TopicConfig("Queue1", new []
                 {
                     new TopicSubscriptionConfig("")
@@ -35,20 +35,8 @@ internal sealed class ServerFixture : IDisposable
                     new TopicSubscriptionConfig("Subscription1"),
                     new TopicSubscriptionConfig("Subscription2")
                 })
-            },
+            ],
         };
-
-        var cert = CertificateHandler.ReadCertificateFromStore();
-        if (!cert.IsSuccess)
-        {
-            CertificateHandler.CreateAndTrustCertificate();
-            cert = CertificateHandler.ReadCertificateFromStore();
-        }
-
-        if (!cert.IsSuccess)
-        {
-            throw new Exception("Can't load the certificate");
-        }
 
         var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -58,7 +46,7 @@ internal sealed class ServerFixture : IDisposable
 
         var nodeFactory = new NodeFactory(loggerFactory, source.Token);
         var server = new Lazvard.Message.Cli.Server(nodeFactory, loggerFactory);
-        broker = server.Start(config, cert.Value);
+        broker = server.Start(config, null);
     }
 
     public void Dispose()
