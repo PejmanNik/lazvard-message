@@ -1,7 +1,6 @@
-﻿using Lazvard.Message.Amqp.Server;
-using Lazvard.Message.Amqp.Server.Helpers;
-using Lazvard.Message.Cli;
+﻿using Lazvard.Message.Cli;
 using Microsoft.Extensions.Logging;
+using Spectre.Console;
 
 
 using var loggerFactory = LoggerFactory.Create(builder =>
@@ -10,34 +9,14 @@ using var loggerFactory = LoggerFactory.Create(builder =>
     builder.AddConsole();
 });
 
-Console.WriteLine("Lajvard ServiceBus Simulation");
-Console.WriteLine("------------------------------");
-Console.WriteLine("");
+AnsiConsole.Write(
+    new FigletText("Lajvard")
+    .Color(Color.Blue3_1)
+    );
+AnsiConsole.WriteLine("");
+AnsiConsole.WriteLine("  ServiceBus Simulation");
+AnsiConsole.Write(new Rule());
+AnsiConsole.WriteLine("");
 
-var (config, certificate) = await CliStartup.StartAsync();
 
-var source = new CancellationTokenSource();
-var exitEvent = new AsyncManualResetEvent(false);
-Console.CancelKeyPress += (sender, eventArgs) =>
-{
-    Console.WriteLine("Lajvard ServiceBus service is closing");
-
-    eventArgs.Cancel = true;
-    exitEvent.Set();
-};
-
-var nodeFactory = new NodeFactory(loggerFactory, source.Token);
-var server = new Server(nodeFactory, loggerFactory);
-var broker = server.Start(config, certificate);
-
-Console.WriteLine($"Lajvard ServiceBus service is successfully listening at http://{config.IP}:{config.Port}");
-Console.WriteLine();
-Console.Write($"ConnectionString: Endpoint=sb://{config.IP}/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=1");
-Console.WriteLine();
-Console.WriteLine();
-
-await exitEvent.WaitAsync(default);
-source.Cancel();
-broker.Stop();
-
-Console.WriteLine("Lajvard ServiceBus service successfully closed");
+await CommandHandler.Handle(args, loggerFactory);

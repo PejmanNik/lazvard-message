@@ -18,7 +18,7 @@ public sealed class Server
         this.nodeFactory = nodeFactory;
     }
 
-    public Broker Start(BrokerConfig brokerSettings, X509Certificate2 certificate)
+    public Broker Start(CliConfig config, X509Certificate2? certificate)
     {
         var amqpSettings = new AmqpSettings();
         var version = new AmqpVersion(1, 0, 0);
@@ -37,11 +37,20 @@ public sealed class Server
 
         var listeners = new TransportListener[1];
 
-        var tcpSettings = new TcpTransportSettings() { Host = brokerSettings.IP, Port = brokerSettings.Port };
-        var tlsSettings = new TlsTransportSettings(tcpSettings) { Certificate = certificate, IsInitiator = false };
-        listeners[0] = tlsSettings.CreateListener();
+        var tcpSettings = new TcpTransportSettings() { Host = config.IP, Port = config.Port };
 
-        var broker = new Broker(brokerSettings, nodeFactory.Create(brokerSettings), listeners, amqpSettings, loggerFactory);
+        if (config.UseHttps && certificate != null)
+        {
+            var tlsSettings = new TlsTransportSettings(tcpSettings) { Certificate = certificate, IsInitiator = false };
+            listeners[0] = tlsSettings.CreateListener();
+        }
+        else
+        {
+            listeners[0] = tcpSettings.CreateListener();
+        }
+
+
+        var broker = new Broker(config, nodeFactory.Create(config), listeners, amqpSettings, loggerFactory);
         broker.Start();
 
         return broker;

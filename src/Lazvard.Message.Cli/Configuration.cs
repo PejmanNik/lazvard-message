@@ -10,6 +10,7 @@ public class CliConfig : BrokerConfig
     public bool UseBuiltInCertificateManager { get; set; } = true;
     public string CertificatePath { get; set; } = string.Empty;
     public string CertificatePassword { get; set; } = string.Empty;
+    public bool UseHttps { get; set; } = false;
 }
 
 internal static class ConfigurationSections
@@ -21,11 +22,13 @@ internal static class ConfigurationSections
 
 public sealed class Configuration
 {
-    private const string path = "config.toml";
+    private const string defaultName = "config.toml";
+    private static readonly string userConfigPath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".lazvard");
 
     public static async Task WriteAsync(CliConfig config)
     {
-        using StreamWriter writer = File.CreateText(path);
+        using StreamWriter writer = File.CreateText(defaultName);
 
         var toml = new TomlTable()
         {
@@ -41,6 +44,11 @@ public sealed class Configuration
                 {
                     Value = config.Port,
                     Comment = "Port to listen on"
+                },
+                [nameof(CliConfig.UseHttps)] = new TomlBoolean
+                {
+                    Value = config.UseHttps,
+                    Comment = "use Https with a valid certificate, default is false"
                 },
                 [nameof(CliConfig.UseBuiltInCertificateManager)] = new TomlBoolean
                 {
@@ -161,8 +169,8 @@ public sealed class Configuration
     {
         var config = new CliConfig
         {
-            Topics = new TopicConfig[]
-            {
+            Topics =
+            [
                 new TopicConfig("topic-1", new[]
                 {
                     new TopicSubscriptionConfig("topic-1-subscription-a")
@@ -176,29 +184,48 @@ public sealed class Configuration
                 {
                     new TopicSubscriptionConfig("")
                 }),
-            },
+            ],
         };
 
         await WriteAsync(config);
     }
 
-    public static bool Exists()
+    public static (string path, bool exists) GetConfigPath(string? inputConfigPath)
     {
-        return File.Exists(path);
-    }
-
-    public static Result<CliConfig> Read()
-    {
-        if (!Exists())
+        if (!string.IsNullOrEmpty(inputConfigPath))
         {
-            return Result.Fail("can't find the file.");
+            return (inputConfigPath, File.Exists(inputConfigPath));
+        }
+        if (File.Exists(defaultName))
+        {
+            return (defaultName, true);
+        }
+        if (File.Exists(Path.Combine(userConfigPath, defaultName)))
+        {
+            return (Path.Combine(userConfigPath, defaultName), true);
         }
 
+        return (defaultName, false);
+    }
+
+    public static bool Exists(string? configPath)
+    {
+        if (!string.IsNullOrEmpty(configPath))
+        {
+            return File.Exists(configPath);
+        }
+
+        return File.Exists(defaultName)
+            || File.Exists(Path.Combine(userConfigPath, defaultName));
+    }
+
+    public static Result<CliConfig> Read(string path)
+    {
         using var configFile = File.OpenText(path);
         var config = TOML.Parse(configFile);
         if (config is null)
         {
-            return Result.Fail("file is not a valid Toml.");
+            return Result.Fail("file is not a valid TOML.");
         }
 
         try
@@ -207,6 +234,8 @@ public sealed class Configuration
 
             result.IP = config[ConfigurationSections.Server][nameof(BrokerConfig.IP)]?.AsString ?? result.IP;
             result.Port = config[ConfigurationSections.Server][nameof(BrokerConfig.Port)]?.AsInteger ?? result.Port;
+            result.UseHttps = config[ConfigurationSections.Server][nameof(CliConfig.UseHttps)].AsBoolean ?? result.UseHttps;
+            result.UseBuiltInCertificateManager = config[ConfigurationSections.Server][nameof(CliConfig.UseBuiltInCertificateManager)].AsBoolean ?? result.UseBuiltInCertificateManager;
             result.CertificatePath = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePath)].AsString;
             result.CertificatePassword = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePassword)].AsString;
 
@@ -223,8 +252,8 @@ public sealed class Configuration
             var queues = config[nameof(ConfigurationSections.Queues)]
                 .AsArray?
                 .Children
-                .Select(q => new TopicConfig(q[nameof(TopicConfig.Name)].AsString, new[]
-                {
+                .Select(q => new TopicConfig(q[nameof(TopicConfig.Name)].AsString,
+                [
                     new TopicSubscriptionConfig(string.Empty)
                     {
                         LockDuration = Duration.Parse(q[nameof(TopicSubscriptionConfig.LockDuration)]?.AsString
@@ -232,8 +261,8 @@ public sealed class Configuration
                         MaxDeliveryCount = q[nameof(TopicSubscriptionConfig.MaxDeliveryCount)]?.AsInteger
                             ?? defaultTopicConf.MaxDeliveryCount,
                     }
-                })
-                ).ToArray() ?? Array.Empty<TopicConfig>();
+                ])
+                ).ToArray() ?? [];
 
             var topics = config[nameof(BrokerConfig.Topics)]
                 .AsArray?
@@ -252,9 +281,9 @@ public sealed class Configuration
                         });
 
                     return new TopicConfig(t[nameof(TopicConfig.Name)].AsString, subscriptions);
-                }).ToArray() ?? Array.Empty<TopicConfig>();
+                }).ToArray() ?? [];
 
-            result.Topics = topics.Concat(queues).ToArray();
+            result.Topics = [.. topics, .. queues];
 
             return result;
         }
