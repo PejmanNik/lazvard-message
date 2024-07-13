@@ -16,7 +16,7 @@ dotnet run --project ./src/Lazvard.Message.Cli
 Alternatively, you can download the latest version of Lazvard from the release page. At least on Windows, you will need to manually trust the application in Microsoft's SmartScreen upon the first run.
 
 ```
-wget -O ./lazvard.zip https://github.com/PejmanNik/lazvard-message/releases/download/v0.2.1/win-x64.zip
+wget -O ./lazvard.zip https://github.com/PejmanNik/lazvard-message/releases/download/v0.3.0/win-x64.zip
 ```
 
 The application will create a default config file if it's not found on the first run. This config file is in TOML format. Before running Lazvard, you need to define all the queues, topics, and subscriptions in the config file. 
