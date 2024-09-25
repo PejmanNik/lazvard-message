@@ -1,0 +1,65 @@
+[Server]
+# IP to listen on
+IP = "localhost"
+# Port to listen on
+Port = 5671
+# use Https with a valid certificate, default is false
+UseHttps = false
+# Use built-in certificate manager (dotnet dev-certs) instead of CertificatePath
+UseBuiltInCertificateManager = true
+# The path to trusted X.509 certificate (PFX - PKCS #12), required only when UseBuiltInCertificateManager is false
+CertificatePath = ""
+# The certificate password, optional
+CertificatePassword = ""
+
+[AMQP]
+# Connection idle timeout in milliseconds for AMQP connection, default is 4 minutes
+ConnectionIdleTimeOut = 240000
+# Max AMQP frame size in byte, default is 64Kib
+MaxFrameSize = 65536
+# Max AMQP message size in byte, default is 64MiB
+MaxMessageSize = 67108864
+
+[[Queues]]
+# Queue name
+Name = "queue-name-1"
+# Number of maximum deliveries. The default value is 50 times
+MaxDeliveryCount = 50
+# ISO 8061 lock duration for the subscription. The default value is 1 minute
+LockDuration = "PT1M"
+[[Queues]]
+Name = "queue-name-2"
+
+
+[[Topics]]
+# Topic name
+Name = "topic-1"
+
+[[Topics.Subscriptions]]
+# Subscription name
+Name = "topic-1-subscription-a"
+# Number of maximum deliveries. The default value is 50 times
+MaxDeliveryCount = 50
+# ISO 8061 lock duration for the subscription. The default value is 1 minute
+LockDuration = "PT1M"
+
+[[Topics]]
+# Topic name
+Name = "topic-2"
+
+[[Topics.Subscriptions]]
+# Subscription name
+Name = "topic-2-subscription-a"
+# Number of maximum deliveries. The default value is 50 times
+MaxDeliveryCount = 50
+# ISO 8061 lock duration for the subscription. The default value is 1 minute
+LockDuration = "PT1M"
+
+[[Topics.Subscriptions]]
+# Subscription name
+Name = "topic-2-subscription-b"
+# Number of maximum deliveries. The default value is 50 times
+MaxDeliveryCount = 50
+# ISO 8061 lock duration for the subscription. The default value is 1 minute
+LockDuration = "PT1M"
+
