@@ -1,0 +1,10 @@
+services:
+  service-bus:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - "5671:5671"
+    volumes:
+      - './config.toml:/app/config.toml'
+
