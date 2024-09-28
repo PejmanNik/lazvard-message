@@ -12,6 +12,19 @@ public static class CommandHandler
     {
         var rootCommand = new RootCommand("Lazvard Message Command Line");
 
+        var initConfigOption = new Option<bool>(
+            name: "--init-config",
+            description: "Create config file");
+        initConfigOption.AddAlias("-ic");
+        initConfigOption.IsRequired = false;
+        initConfigOption.SetDefaultValue(true);
+
+        var silentOption = new Option<bool>(
+            name: "--silent",
+            description: "Suppress all user input prompt");
+        silentOption.AddAlias("-s");
+        silentOption.IsRequired = false;
+
         var configOption = new Option<string?>(
             name: "--config",
             description: "The TOML config file path");
@@ -20,19 +33,20 @@ public static class CommandHandler
         configOption.IsRequired = false;
 
         rootCommand.AddOption(configOption);
+        rootCommand.AddOption(silentOption);
+        rootCommand.AddOption(initConfigOption);
 
-        rootCommand.SetHandler((configPath) =>
+        rootCommand.SetHandler((configPath, isSilent, initConfig) =>
         {
-            return RunServer(configPath, loggerFactory);
-        }, configOption);
+            return RunServer(new AMQPServerParameters(configPath, isSilent, initConfig), loggerFactory);
+        }, configOption, silentOption, initConfigOption);
 
         await rootCommand.InvokeAsync(args);
     }
 
-    public static async Task RunServer(string? configPath, ILoggerFactory loggerFactory)
+    public static async Task RunServer(AMQPServerParameters parameters, ILoggerFactory loggerFactory)
     {
-        var (config, certificate) = await AMQPServerHandler
-            .StartAsync(new AMQPServerParameters(configPath));
+        var (config, certificate) = await AMQPServerHandler.StartAsync(parameters);
 
         Console.WriteLine($"Lajvard ServiceBus service is successfully listening at http://{config.IP}:{config.Port}");
         Console.WriteLine();

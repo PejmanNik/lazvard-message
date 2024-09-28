@@ -4,9 +4,11 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Lazvard.Message.Cli;
 
-public class AMQPServerParameters(string? configPath)
+public class AMQPServerParameters(string? configPath, bool isSilent, bool initConfigFile)
 {
     public string? ConfigPath { get; } = configPath;
+    public bool IsSilent { get; } = isSilent;
+    public bool InitConfigFile { get; } = initConfigFile;
 }
 
 public class AMQPServerHandler
@@ -14,23 +16,15 @@ public class AMQPServerHandler
     public static async Task<(CliConfig, X509Certificate2?)> StartAsync(AMQPServerParameters parameters)
     {
         var (configPath, configExists) = Configuration.GetConfigPath(parameters.ConfigPath);
-        if (!configExists && !string.IsNullOrEmpty(parameters.ConfigPath))
-        {
-            AnsiConsole.MarkupLine($"[red]Can't find the config file in '{parameters.ConfigPath}'[/]");
-            AnsiConsole.WriteLine();
-            Environment.Exit(0);
-        }
-        if (!configExists)
+        if (!configExists && parameters.InitConfigFile)
         {
             AnsiConsole.WriteLine("Can't find the config file, creating the init config file...");
-            AnsiConsole.WriteLine();
-
-
-            await Configuration.CreateDefaultConfigAsync();
+            await Configuration.WriteAsync(Configuration.CreateDefaultConfig(), configPath);
             AnsiConsole.WriteLine("default config file successfully created!");
 
+            AnsiConsole.WriteLine();
             AnsiConsole.WriteLine("The latest version of the Azure SDK no longer requires an HTTPS connection for the local server.");
-            if (AnsiConsole.Confirm("Do you want to use Https?", false))
+            if (!parameters.IsSilent && AnsiConsole.Confirm("Do you want to use Https?", false))
             {
                 var certificateStoreResult = CertificateHandler.ReadCertificateFromStore();
                 if (!certificateStoreResult.IsSuccess)
@@ -48,6 +42,12 @@ public class AMQPServerHandler
                     }
                 }
             }
+        }
+        else if (!configExists)
+        {
+            AnsiConsole.MarkupLine($"[red]Can't find the config file in '{parameters.ConfigPath}'[/]");
+            AnsiConsole.WriteLine();
+            Environment.Exit(0);
         }
 
         var config = Configuration.Read(configPath);

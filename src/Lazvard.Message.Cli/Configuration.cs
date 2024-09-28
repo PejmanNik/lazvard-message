@@ -1,6 +1,7 @@
 ﻿using Iso8601DurationHelper;
 using Lazvard.Message.Amqp.Server;
 using Lazvard.Message.Amqp.Server.Helpers;
+using System.Xml.Linq;
 using Tommy;
 
 namespace Lazvard.Message.Cli;
@@ -26,9 +27,9 @@ public sealed class Configuration
     private static readonly string userConfigPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".lazvard");
 
-    public static async Task WriteAsync(CliConfig config)
+    public static async Task WriteAsync(CliConfig config, string path)
     {
-        using StreamWriter writer = File.CreateText(defaultName);
+        using StreamWriter writer = File.CreateText(path);
 
         var toml = new TomlTable()
         {
@@ -165,9 +166,9 @@ public sealed class Configuration
         };
     }
 
-    public static async Task CreateDefaultConfigAsync()
+    public static CliConfig CreateDefaultConfig()
     {
-        var config = new CliConfig
+       return new CliConfig
         {
             Topics =
             [
@@ -186,8 +187,6 @@ public sealed class Configuration
                 }),
             ],
         };
-
-        await WriteAsync(config);
     }
 
     public static (string path, bool exists) GetConfigPath(string? inputConfigPath)

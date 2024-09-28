@@ -2,6 +2,17 @@ Lazvard Message is an AMQP server simulator that is **unofficially** compatible 
 
 ## Setup
 
+### Docker
+
+Create an empty folder and map it to the container for configuration storage. The container will generate a default config file upon its first run. After making any modifications, restart the container.
+
+```bash
+docker run -p 5671:5671 -v ./config:/App/config pejmann/lazvard-message
+
+podman run -p 5671:5671 -v ./config:/App/config pejmann/lazvard-message
+```
+
+### Manual Build
 
 You need to have .NET 8 installed on your operating system to run this project. You can download it from [here](https://dotnet.microsoft.com/en-us/download).
 
