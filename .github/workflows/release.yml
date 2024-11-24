@@ -32,8 +32,14 @@ jobs:
           filename: "${{ matrix.rid }}.zip"
           path: "."
 
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        name: build-artifact
+        path: "./publish/${{ matrix.rid }}.zip"
+  
       - name: Push ${{ matrix.rid }}.zip to release
         uses: ncipollo/release-action@v1
+        if: ${{ github.event_name == 'push' }}
         with:
           artifacts: "./publish/${{ matrix.rid }}.zip"
           allowUpdates: true
