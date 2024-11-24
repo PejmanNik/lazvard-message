@@ -34,7 +34,6 @@ jobs:
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
-        name: build-artifact
         path: "./publish/${{ matrix.rid }}.zip"
   
       - name: Push ${{ matrix.rid }}.zip to release
