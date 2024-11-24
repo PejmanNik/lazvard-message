@@ -57,7 +57,7 @@ jobs:
     name: Push Docker image to Docker Hub
     permissions:
       id-token: write
-      contents: read
+      attestations: write
     steps:
       - uses: actions/checkout@v4
       - name: Log in to Docker Hub
