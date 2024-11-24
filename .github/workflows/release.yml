@@ -55,6 +55,9 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     name: Push Docker image to Docker Hub
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Log in to Docker Hub
