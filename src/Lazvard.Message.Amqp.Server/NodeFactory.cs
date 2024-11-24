@@ -18,7 +18,8 @@ public class NodeFactory
     {
         var consumerFactory = new ConsumerFactory(loggerFactory);
 
-        var deadletterConfig = new TopicSubscriptionConfig($"{config.Name}/{SubscriptionConstants.DeadletterQueue}");
+        var deadletterConfig = new TopicSubscriptionConfig($"{config.Name}/{SubscriptionConstants.DeadletterQueue}")
+            .SetTopicName(config.TopicName);
         var deadletterMessageQueue = new MessageQueue(config, stopToken, null, loggerFactory);
         var deadletterQueue = new Subscription(deadletterConfig, deadletterMessageQueue, consumerFactory, loggerFactory, stopToken);
         yield return deadletterQueue;
@@ -27,7 +28,8 @@ public class NodeFactory
         var subscription = new Subscription(config, messageQueue, consumerFactory, loggerFactory, stopToken);
         yield return subscription;
 
-        var managementConfig = new TopicSubscriptionConfig($"{config.Name}/{SubscriptionConstants.Management}");
+        var managementConfig = new TopicSubscriptionConfig($"{config.Name}/{SubscriptionConstants.Management}")
+            .SetTopicName(config.TopicName);
         yield return new ManagementSubscription(
             messageQueue,
             managementConfig,

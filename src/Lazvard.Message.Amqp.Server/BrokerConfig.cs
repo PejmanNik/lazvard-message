@@ -11,9 +11,16 @@ public class TopicSubscriptionConfig
     }
 
     public string Name { get; set; }
+    public string TopicName { get; private set; } = string.Empty;
     public Duration LockDuration { get; set; } = Duration.FromMinutes(1);
     public int MaxDeliveryCount { get; set; } = 50;
     public Duration TimeToLive { get; set; } = Duration.FromDays(14);
+
+    internal TopicSubscriptionConfig SetTopicName(string name)
+    {
+        TopicName = name;
+        return this;
+    }
 }
 
 
@@ -22,7 +29,7 @@ public class TopicConfig
     public TopicConfig(string name, IEnumerable<TopicSubscriptionConfig> subscriptions)
     {
         Name = name;
-        Subscriptions = subscriptions;
+        Subscriptions = subscriptions.Select(x=> x.SetTopicName(name));
     }
 
     public string Name { get; set; }

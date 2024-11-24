@@ -27,15 +27,15 @@ namespace Lazvard.Message.Amqp.Server.IntegrationTests
             var messagesTask1 = receiver1.ReceiveMessagesAsync(1);
             var messagesTask2 = receiver2.ReceiveMessagesAsync(1);
 
-            await Task.WhenAll(messagesTask1, messagesTask2);
+            var results = await Task.WhenAll(messagesTask1, messagesTask2);
 
-            Assert.Single(messagesTask1.Result);
-            Assert.Single(messagesTask2.Result);
-            Assert.Equal(messageBody, messagesTask1.Result[0].Body.ToString());
-            Assert.Equal(messageBody, messagesTask2.Result[0].Body.ToString());
+            Assert.Single(results[0]);
+            Assert.Single(results[1]);
+            Assert.Equal(messageBody, results[0][0].Body.ToString());
+            Assert.Equal(messageBody, results[1][0].Body.ToString());
 
-            await receiver1.CompleteMessageAsync(messagesTask1.Result[0]);
-            await receiver2.CompleteMessageAsync(messagesTask2.Result[0]);
+            await receiver1.CompleteMessageAsync(results[0][0]);
+            await receiver2.CompleteMessageAsync(results[1][0]);
         }
 
         [Fact]
