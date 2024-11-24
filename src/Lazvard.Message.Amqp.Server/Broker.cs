@@ -59,7 +59,8 @@ public partial class Broker
         AmqpConnection? connection = null;
         try
         {
-            logger.LogTrace("accept new connecting from {Host}", connectionSettings.HostName);
+            logger.LogTrace("accept new connecting from {Remote}/{Id}", 
+                args.Transport.RemoteEndPoint, args.Transport.Identifier);
 
             connection = this.CreateConnection(
                 args.Transport,

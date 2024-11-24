@@ -32,7 +32,7 @@ wget -O ./lazvard.zip https://github.com/PejmanNik/lazvard-message/releases/down
 
 The application will create a default config file if it's not found on the first run. This config file is in TOML format. Before running Lazvard, you need to define all the queues, topics, and subscriptions in the config file. 
 
-The new Azure SDK supports HTTP transport for local emulators, so HTTPS is no longer required. However, if you want to use HTTPS, you can set UseHttps to true in the config file. If you enable UseHttps, the AMQP server will require a valid and trusted X.509 certificate (PFX - PKCS #12). On Windows and macOS, the application can create and trust certificates using dotnet dev-certs. However, on Linux, you will need to manually set the certificate as trusted.
+The new Azure SDK supports HTTP transport for local emulators, so HTTPS is no longer required.if you prefer to use HTTPS, you can set `UseHttps` to true in the configuration file. Enabling `UseHttps` requires to have a valid and trusted X.509 certificate (PFX - PKCS #12). You will also need to specify the certificate path and password in the configuration.
 
 It's important to note that Lazvard is stateless, meaning that once you close it, all messages and information will be lost.
 
