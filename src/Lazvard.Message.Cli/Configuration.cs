@@ -8,7 +8,6 @@ namespace Lazvard.Message.Cli;
 
 public class CliConfig : BrokerConfig
 {
-    public bool UseBuiltInCertificateManager { get; set; } = true;
     public string CertificatePath { get; set; } = string.Empty;
     public string CertificatePassword { get; set; } = string.Empty;
     public bool UseHttps { get; set; } = false;
@@ -50,11 +49,6 @@ public sealed class Configuration
                 {
                     Value = config.UseHttps,
                     Comment = "use Https with a valid certificate, default is false"
-                },
-                [nameof(CliConfig.UseBuiltInCertificateManager)] = new TomlBoolean
-                {
-                    Value = config.UseBuiltInCertificateManager,
-                    Comment = "Use built-in certificate manager (dotnet dev-certs) instead of CertificatePath"
                 },
                 [nameof(CliConfig.CertificatePath)] = new TomlString
                 {
@@ -234,7 +228,6 @@ public sealed class Configuration
             result.IP = config[ConfigurationSections.Server][nameof(BrokerConfig.IP)]?.AsString ?? result.IP;
             result.Port = config[ConfigurationSections.Server][nameof(BrokerConfig.Port)]?.AsInteger ?? result.Port;
             result.UseHttps = config[ConfigurationSections.Server][nameof(CliConfig.UseHttps)].AsBoolean ?? result.UseHttps;
-            result.UseBuiltInCertificateManager = config[ConfigurationSections.Server][nameof(CliConfig.UseBuiltInCertificateManager)].AsBoolean ?? result.UseBuiltInCertificateManager;
             result.CertificatePath = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePath)].AsString;
             result.CertificatePassword = config[ConfigurationSections.Server][nameof(CliConfig.CertificatePassword)].AsString;
 
