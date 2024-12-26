@@ -33,12 +33,18 @@ static class AmqpMessageExtension
         .GetProperties(BindingFlags.Instance | BindingFlags.Public)
         .ToDictionary(x => x.Name));
 
+    public static AmqpMessage IncreaseDeliveryCount(this AmqpMessage message)
+    {
+        message.Header.DeliveryCount = (message.Header.DeliveryCount ?? 0) + 1;
+        return message;
+    }
+
     public static AmqpMessage Clone(this AmqpMessage message, bool deepClone = false)
     {
         // Microsoft.Azure.Amqp v2 don't have a suitable clone method
-        var cloned = message.Clone();
+        AmqpMessage cloned = message.Clone();
         GetPayloadInitializedField(cloned).Value.SetValue(cloned, false);
-        var properties = GetProperties(cloned).Value;
+        Dictionary<string, PropertyInfo> properties = GetProperties(cloned).Value;
 
         if (!deepClone)
         {
@@ -128,7 +134,7 @@ static class AmqpMessageExtension
 
     public static ArraySegment<byte> GetMergedPayload(this AmqpMessage message)
     {
-        var data = message.GetPayload().SelectMany(x => x).ToArray();
+        byte[] data = message.GetPayload().SelectMany(x => x).ToArray();
         return new ArraySegment<byte>(data);
     }
 

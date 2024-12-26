@@ -58,10 +58,12 @@ public sealed class Consumer
         {
             if (modified.UndeliverableHere == true)
             {
+                // Defer
                 return messageQueue.TryDefer(lockToken, link.Name);
             }
             else
             {
+                // Abandon
                 return messageQueue.TryRelease(lockToken, link.Name);
             }
         }
@@ -144,7 +146,6 @@ public sealed class Consumer
         try
         {
             link.SendMessageNoWait(clonedMessage.Value, clonedMessage.Value.DeliveryTag, new ArraySegment<byte>());
-            message.Header.DeliveryCount += 1;
 
             logger.LogTrace("delivered message {MessageSeqNo} to {Link} with DeliveryTag {DeliveryTag}, DeliveryCount {DeliveryCount}",
                 clonedMessage.Value.GetSequenceNumber(), LinkName, clonedMessage.Value.DeliveryTag, clonedMessage.Value.Header.DeliveryCount ?? 0);

@@ -223,13 +223,13 @@ public sealed class ManagementSubscription : SubscriptionBase
             var delivered = consumer.Value.TryToDeliver(message);
 
             logger.LogTrace("delivering message {MessageSeqNo} in subscription {Subscription} to consumer {Link} was {Status}",
-             message.GetSequenceNumber(), fullName, consumer.Value.LinkName, delivered ? "Successful" : "Failed");
+             message.GetSequenceNumber(), config.FullName, consumer.Value.LinkName, delivered ? "Successful" : "Failed");
 
             if (delivered) return;
         }
 
         logger.LogError("delivering message {MessageSeqNo} in subscription {Subscription} Failed",
-            message.GetSequenceNumber(), fullName);
+            message.GetSequenceNumber(), config.FullName);
     }
 
     private Result<Consumer> GetTargetConsumer(AmqpMessage message)

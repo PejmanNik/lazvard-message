@@ -25,7 +25,6 @@ public abstract class SubscriptionBase : ISubscription
     protected readonly IMessageQueue messageQueue;
     protected readonly TopicSubscriptionConfig config;
     protected readonly ILogger logger;
-    protected readonly string fullName;
 
     public string Name => config.Name;
 
@@ -40,7 +39,6 @@ public abstract class SubscriptionBase : ISubscription
         this.stopToken = stopToken;
         this.messageQueue = messageQueue;
         this.consumerFactory = consumerFactory;
-        fullName = string.Join('/', config.TopicName, config.Name);
 
         logger = loggerFactory.CreateLogger<Subscription>();
         consumers = new(2, 5);
@@ -57,7 +55,8 @@ public abstract class SubscriptionBase : ISubscription
     public void Write(AmqpMessage message)
     {
         var sequenceNumber = messageQueue.Enqueue(message);
-        logger.LogTrace("write message {MessageSeqNo} to subscription {Subscription} channel", sequenceNumber, fullName);
+        logger.LogTrace("write message {MessageSeqNo} to subscription {Subscription} channel", 
+            sequenceNumber, config.FullName);
     }
 
     public void OnAttachSendingLink(SendingAmqpLink link)
@@ -92,7 +91,7 @@ public abstract class SubscriptionBase : ISubscription
             try
             {
                 logger.LogTrace("waiting to receive a message in subscription {Subscription}",
-                    fullName);
+                    config.FullName);
 
                 // wait for receiving a message
                 var message = await messageQueue.DequeueAsync(stopToken);
@@ -106,7 +105,7 @@ public abstract class SubscriptionBase : ISubscription
                 if (!activeConsumers.Any())
                 {
                     logger.LogTrace("no consumers to deliver the message {MessageSeqNo} in subscription {Subscription}, waiting...",
-                        message.Value.GetTraceId(), fullName);
+                        message.Value.GetTraceId(), config.FullName);
 
                     // wait for a active consumer
                     await emptyConsumerEvent.WaitAsync(stopToken);

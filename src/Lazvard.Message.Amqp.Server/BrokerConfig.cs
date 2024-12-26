@@ -16,6 +16,8 @@ public class TopicSubscriptionConfig
     public int MaxDeliveryCount { get; set; } = 50;
     public Duration TimeToLive { get; set; } = Duration.FromDays(14);
 
+    public string FullName => $"{TopicName}/{Name}";
+
     internal TopicSubscriptionConfig SetTopicName(string name)
     {
         TopicName = name;

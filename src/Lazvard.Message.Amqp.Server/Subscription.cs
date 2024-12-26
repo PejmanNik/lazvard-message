@@ -27,7 +27,7 @@ public sealed class Subscription : SubscriptionBase
     protected override void ProcessIncomingMessage(AmqpMessage message, CancellationToken stopToken)
     {
         logger.LogTrace("process message {MessageSeqNo} in subscription {Subscription}",
-            message.GetTraceId(), fullName);
+            message.GetTraceId(), config.FullName);
 
         var delivered = false;
 
@@ -37,7 +37,7 @@ public sealed class Subscription : SubscriptionBase
             delivered = consumer.TryToDeliver(message);
 
             logger.LogTrace("delivering message {MessageSeqNo} in subscription {Subscription} to consumer {Link} was {Status}",
-             message.GetTraceId(), fullName, "", delivered ? "Successful" : "Failed");
+             message.GetTraceId(), config.FullName, "", delivered ? "Successful" : "Failed");
 
             if (delivered)
                 break;
@@ -45,23 +45,11 @@ public sealed class Subscription : SubscriptionBase
 
         if (!delivered)
         {
-            if (message.Header.DeliveryCount >= config.MaxDeliveryCount)
-            {
-                logger.LogError("the message {MessageSeqNo} in subscription {Subscription} has reached the maximum delivery count {MaxDeliveryCount} and will be dead-lettered",
-                    message.GetTraceId(), fullName, config.MaxDeliveryCount);
-
-                if (!messageQueue.TryDeadletter(message))
-                {
-                    logger.LogError("can not move message {MessageSeqNo} in subscription {Subscription} to dead-lettered",
-                        message.GetTraceId(), fullName);
-                }
-            }
-
             // try again to send the message
             if (!messageQueue.TryReEnqueue(message))
             {
                 logger.LogError("can not re-enqueue message {MessageSeqNo} in subscription {Subscription}",
-                    message.GetTraceId(), fullName);
+                    message.GetTraceId(), config.FullName);
             }
         }
     }

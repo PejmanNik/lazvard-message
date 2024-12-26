@@ -12,7 +12,7 @@ public record class BrokerMessage
     public Guid LockToken { get; init; }
     public string LockHolderLink { get; init; }
 
-    public long SequenceNumber => Message.GetSequenceNumber();
+    public string TraceId => Message.GetTraceId();
 
     public BrokerMessage(AmqpMessage message)
     {
@@ -48,7 +48,7 @@ public record class BrokerMessage
     {
         if (!assert(this))
         {
-            throw new InvalidOperationException($"The message {SequenceNumber} status is invalid.");
+            throw new InvalidOperationException($"The message {TraceId} status is invalid.");
         }
     }
 }
