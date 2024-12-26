@@ -50,8 +50,8 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
 
     private void OnLockExpiration(BrokerMessage message)
     {
-        logger.LogTrace("message {MessageSeqNo} with lock {LockId} expired and requeued",
-            message.SequenceNumber, message.LockToken);
+        logger.LogTrace("message {MessageSeqNo} in subscription {Subscription} with lock {LockId} expired and requeued",
+            message.TraceId, config.FullName, message.LockToken);
 
         Replace(message.Unlock());
 
@@ -133,8 +133,8 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
         clonedMessage.MessageAnnotations.Map[AmqpMessageConstants.LockedUntil] = lockedUntil;
         clonedMessage.DeliveryAnnotations.Map[AmqpMessageConstants.LockToken] = lockToken;
 
-        logger.LogTrace("add lock {LockId} until {LockedUntil} for message {MessageSeqNo}",
-            lockToken, lockedUntil.Ticks, message.SequenceNumber);
+        logger.LogTrace("add lock {LockId} until {LockedUntil} for message {MessageSeqNo} in subscription {Subscription}",
+            lockToken, lockedUntil.Ticks, message.TraceId, config.FullName);
 
         return clonedMessage;
     }
@@ -292,7 +292,8 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
 
     private void Replace(BrokerMessage message)
     {
-        items[message.SequenceNumber] = message;
+        var sequenceNumber = message.Message.GetSequenceNumber();
+        items[sequenceNumber] = message;
     }
 
     public void Dispose()
@@ -303,15 +304,23 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
     private bool MovedToDeadletterAfterIncreaseDeliveryCount(BrokerMessage message)
     {
         message.Message.IncreaseDeliveryCount();
-        logger.LogTrace("increase delivery count to {DeliveryCount} for message {MessageSeqNo}",
-           message.Message.Header.DeliveryCount, message.SequenceNumber);
+        logger.LogTrace("increase delivery count to {DeliveryCount} for message {MessageSeqNo} in subscription {Subscription}",
+           message.Message.Header.DeliveryCount, message.TraceId, config.FullName);
 
         if (message.Message.Header.DeliveryCount >= config.MaxDeliveryCount)
         {
-            logger.LogTrace("message {MessageSeqNo} reached to max delivery count, moving it to dead letter"
-                , message.SequenceNumber);
+            logger.LogError("message {MessageSeqNo} in subscription {Subscription} has reached the maximum delivery count {MaxDeliveryCount} and will be dead-lettered",
+              message.TraceId, config.FullName, config.MaxDeliveryCount);
 
-            return TryDeadletter(message.Message);
+            if (!TryDeadletter(message.Message))
+            {
+                logger.LogError("can not move message {MessageSeqNo} in subscription {Subscription} to dead-lettered",
+                    message.TraceId, config.FullName);
+
+                return false;
+            }
+
+            return true;
         }
 
         return false;
