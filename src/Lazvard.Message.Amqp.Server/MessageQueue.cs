@@ -1,5 +1,4 @@
-﻿using Iso8601DurationHelper;
-using Lazvard.Message.Amqp.Server.Constants;
+﻿using Lazvard.Message.Amqp.Server.Constants;
 using Lazvard.Message.Amqp.Server.Helpers;
 using Microsoft.Azure.Amqp;
 using Microsoft.Extensions.Logging;
@@ -34,8 +33,7 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
     private readonly SemaphoreSlim semaphore;
     private readonly IExpirationList expirationList;
     private readonly ILogger<MessageQueue> logger;
-    private readonly Duration lockDuration;
-    private readonly Duration timeToLive;
+    private readonly TopicSubscriptionConfig config;
     private readonly IMessageQueue? deadletterQueue;
     private long sequenceNo = 0;
 
@@ -44,10 +42,9 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
         items = new();
         sendQueue = new();
         semaphore = new(1);
-        expirationList = new ExpirationList(lockDuration.ToTimeSpan() / 2, OnLockExpiration, stopToken);
+        config = topicSubscriptionConfig;
+        expirationList = new ExpirationList(config.LockDuration.ToTimeSpan() / 2, OnLockExpiration, stopToken);
         logger = loggerFactory.CreateLogger<MessageQueue>();
-        lockDuration = topicSubscriptionConfig.LockDuration;
-        timeToLive = topicSubscriptionConfig.TimeToLive;
         this.deadletterQueue = deadletterQueue;
     }
 
@@ -58,12 +55,19 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
 
         Replace(message.Unlock());
 
-        if (!message.IsDeferred)
+        if (message.IsDeferred)
         {
-            TryReEnqueue(message.Message);
+            return;
         }
-    }
 
+        // when message is expired, we should increase the delivery count
+        if (MovedToDeadletterAfterIncreaseDeliveryCount(message))
+        {
+            return;
+        }
+
+        TryReEnqueue(message.Message);
+    }
     public long Enqueue(AmqpMessage message)
     {
         var clonedMessage = message.Clone(true);
@@ -77,9 +81,9 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
 
         clonedMessage.Header.DeliveryCount ??= 0;
         clonedMessage.Properties.MessageId ??= Guid.NewGuid();
-        clonedMessage.Properties.AbsoluteExpiryTime = DateTime.UtcNow + timeToLive;
+        clonedMessage.Properties.AbsoluteExpiryTime = DateTime.UtcNow + config.TimeToLive;
         clonedMessage.Properties.CreationTime = DateTime.UtcNow;
-        clonedMessage.Header.Ttl = Convert.ToUInt32(timeToLive.ToTimeSpan().TotalSeconds);
+        clonedMessage.Header.Ttl = Convert.ToUInt32(config.TimeToLive.ToTimeSpan().TotalSeconds);
 
         var brokerMessage = new BrokerMessage(clonedMessage);
         items.TryAdd(messageSeqNo, brokerMessage);
@@ -115,7 +119,7 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
 
     public Result<AmqpMessage> TryLock(BrokerMessage message, string linkName)
     {
-        var lockedUntil = DateTime.UtcNow + lockDuration;
+        var lockedUntil = DateTime.UtcNow + config.LockDuration;
         var lockToken = Guid.NewGuid();
         var lockedMessage = message.Lock(lockToken, lockedUntil, linkName);
 
@@ -140,7 +144,7 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
         var message = expirationList.TryRemove(lockToken, linkName);
         if (!message.IsSuccess) return Result.Fail();
 
-        var lockedUntil = DateTime.UtcNow + lockDuration;
+        var lockedUntil = DateTime.UtcNow + config.LockDuration;
         var lockedMessage = message.Value.RenewLock(lockedUntil);
 
         if (!expirationList.TryAdd(lockedMessage))
@@ -198,13 +202,19 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
         var releasedMessage = message.Value.Unlock();
         Replace(releasedMessage);
 
-        if (!releasedMessage.IsDeferred)
+        if (releasedMessage.IsDeferred)
         {
-            // put it in the send queue again so it will send to the consumers again
-            sendQueue.Enqueue(message.Value);
-            semaphore.Release();
+            return true;
         }
 
+        // put it in the send queue again so it will send to the consumers again
+        if (MovedToDeadletterAfterIncreaseDeliveryCount(message.Value))
+        {
+            return true;
+        }
+
+        sendQueue.Enqueue(message.Value);
+        semaphore.Release();
         return true;
     }
 
@@ -290,4 +300,20 @@ public sealed class MessageQueue : IMessageQueue, IDisposable
         semaphore.Dispose();
     }
 
+    private bool MovedToDeadletterAfterIncreaseDeliveryCount(BrokerMessage message)
+    {
+        message.Message.IncreaseDeliveryCount();
+        logger.LogTrace("increase delivery count to {DeliveryCount} for message {MessageSeqNo}",
+           message.Message.Header.DeliveryCount, message.SequenceNumber);
+
+        if (message.Message.Header.DeliveryCount >= config.MaxDeliveryCount)
+        {
+            logger.LogTrace("message {MessageSeqNo} reached to max delivery count, moving it to dead letter"
+                , message.SequenceNumber);
+
+            return TryDeadletter(message.Message);
+        }
+
+        return false;
+    }
 }

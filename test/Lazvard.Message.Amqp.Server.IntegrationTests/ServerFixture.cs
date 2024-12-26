@@ -10,14 +10,10 @@ internal sealed class ServerFixture : IDisposable
 {
     private readonly Broker broker;
     private readonly CancellationTokenSource source;
-
-    public ServerFixture(IMessageSink testOutputHelper)
+    public static CliConfig CliConfig = new()
     {
-        source = new CancellationTokenSource();
-
-        var config = new CliConfig()
-        {
-            Topics =
+        MaxMessageSize = 64 * 1024 * 1024,
+        Topics =
             [
                 new TopicConfig("Queue1", new []
                 {
@@ -28,6 +24,7 @@ internal sealed class ServerFixture : IDisposable
                     new TopicSubscriptionConfig("Subscription1")
                     {
                         LockDuration = Duration.FromSeconds(1),
+                        MaxDeliveryCount = 2,
                     },
                 }),
                 new TopicConfig("Topic2", new []
@@ -36,17 +33,21 @@ internal sealed class ServerFixture : IDisposable
                     new TopicSubscriptionConfig("Subscription2")
                 })
             ],
-        };
+    };
 
-        var loggerFactory = LoggerFactory.Create(builder =>
+    public ServerFixture(IMessageSink testOutputHelper)
+    {
+        source = new CancellationTokenSource();
+
+        ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.SetMinimumLevel(LogLevel.Trace);
             builder.AddProvider(new TestLoggerProvider(testOutputHelper));
         });
 
-        var nodeFactory = new NodeFactory(loggerFactory, source.Token);
-        var server = new Lazvard.Message.Cli.Server(nodeFactory, loggerFactory);
-        broker = server.Start(config, null);
+        NodeFactory nodeFactory = new NodeFactory(loggerFactory, source.Token);
+        Cli.Server server = new Lazvard.Message.Cli.Server(nodeFactory, loggerFactory);
+        broker = server.Start(CliConfig, null);
     }
 
     public void Dispose()
@@ -101,7 +102,7 @@ public sealed class TestLoggerProvider : ILoggerProvider
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            var message = new DiagnosticMessage($"{DateTime.Now:ss.fff} {formatter(state, exception)}");
+            DiagnosticMessage message = new DiagnosticMessage($"{DateTime.Now:ss.fff} {formatter(state, exception)}");
             testOutputHelper.OnMessage(message);
         }
     }

@@ -80,7 +80,7 @@ namespace Lazvard.Message.Amqp.Server.IntegrationTests
             Assert.Single(messages1);
             Assert.Equal(messageBody, messages1[0].Body.ToString());
 
-            //still locked fro receiver1
+            // still locked fro receiver1
             await using var receiver2 = client.CreateReceiver("Topic1", "Subscription1");
             var messages2 = await receiver2.ReceiveMessagesAsync(1, TimeSpan.FromMilliseconds(300));
             Assert.Empty(messages2);
@@ -199,14 +199,12 @@ namespace Lazvard.Message.Amqp.Server.IntegrationTests
 
             await using var dlReceiver = client.CreateReceiver("Topic1", "Subscription1", new ServiceBusReceiverOptions
             {
-                SubQueue = SubQueue.DeadLetter
+                SubQueue = SubQueue.DeadLetter,
+                ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete
             });
             var messages2 = await dlReceiver.ReceiveMessagesAsync(1);
             Assert.Single(messages2);
             Assert.Equal(messageBody, messages2[0].Body.ToString());
-
-            // maintain server state
-            await dlReceiver.CompleteMessageAsync(messages2[0]);
         }
 
         [Fact]
@@ -216,17 +214,16 @@ namespace Lazvard.Message.Amqp.Server.IntegrationTests
             await using var sender = client.CreateSender("Topic1");
             await sender.SendMessageAsync(new ServiceBusMessage(messageBody));
 
-            await using var receiver1 = client.CreateReceiver("Topic1", "Subscription1");
+            await using var receiver1 = client.CreateReceiver("Topic1", "Subscription1", new() { PrefetchCount = 0, Identifier = "C1" });
             var messages1 = await receiver1.ReceiveMessagesAsync(1);
             Assert.Single(messages1);
 
             await receiver1.AbandonMessageAsync(messages1[0]);
 
             // maintain server state
-            await using var receiver2 = client.CreateReceiver("Topic1", "Subscription1");
-            var messages2 = await receiver2.ReceiveMessagesAsync(1);
+            var messages2 = await receiver1.ReceiveMessagesAsync(1);
             Assert.Single(messages2);
-            await receiver2.CompleteMessageAsync(messages2[0]);
+            await receiver1.CompleteMessageAsync(messages2[0]);
         }
     }
 }
