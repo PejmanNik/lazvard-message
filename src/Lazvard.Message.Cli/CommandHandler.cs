@@ -8,40 +8,37 @@ namespace Lazvard.Message.Cli;
 
 public static class CommandHandler
 {
-    public static async Task Handle(string[] args, ILoggerFactory loggerFactory)
+    public static Task<int> Handle(string[] args, ILoggerFactory loggerFactory)
     {
         var rootCommand = new RootCommand("Lazvard Message Command Line");
 
-        var initConfigOption = new Option<bool>(
-            name: "--init-config",
-            description: "Create config file");
-        initConfigOption.AddAlias("-ic");
-        initConfigOption.IsRequired = false;
-        initConfigOption.SetDefaultValue(true);
-
-        var silentOption = new Option<bool>(
-            name: "--silent",
-            description: "Suppress all user input prompt");
-        silentOption.AddAlias("-s");
-        silentOption.IsRequired = false;
-
-        var configOption = new Option<string?>(
-            name: "--config",
-            description: "The TOML config file path");
-
-        configOption.AddAlias("-c");
-        configOption.IsRequired = false;
-
-        rootCommand.AddOption(configOption);
-        rootCommand.AddOption(silentOption);
-        rootCommand.AddOption(initConfigOption);
-
-        rootCommand.SetHandler((configPath, isSilent, initConfig) =>
+        var initConfigOption = new Option<bool>("--init-config", "-ic")
         {
-            return RunServer(new AMQPServerParameters(configPath, isSilent, initConfig), loggerFactory);
-        }, configOption, silentOption, initConfigOption);
+            Description = "Create config file", Required = true, DefaultValueFactory = (_) => true
+        };
 
-        await rootCommand.InvokeAsync(args);
+        var silentOption = new Option<bool>("--silent", "-s")
+        {
+            Description = "Suppress all user input prompt", Required = false,
+        };
+
+        var configOption = new Option<string?>("--config", "-c")
+        {
+            Description = "The TOML config file path", Required = false,
+        };
+
+        rootCommand.Options.Add(configOption);
+        rootCommand.Options.Add(silentOption);
+        rootCommand.Options.Add(initConfigOption);
+
+        rootCommand.SetAction((parsed) => RunServer(new AMQPServerParameters(
+                parsed.GetValue(configOption),
+                parsed.GetValue(silentOption),
+                parsed.GetValue(initConfigOption)),
+            loggerFactory));
+
+        var parseResult = rootCommand.Parse(args);
+        return parseResult.InvokeAsync();
     }
 
     public static async Task RunServer(AMQPServerParameters parameters, ILoggerFactory loggerFactory)
@@ -51,11 +48,12 @@ public static class CommandHandler
         Console.WriteLine($"Lajvard ServiceBus service is successfully listening at http://{config.IP}:{config.Port}");
         Console.WriteLine();
 
-        var connectionStringPanel = new Panel($"ConnectionString: Endpoint=sb://{config.IP}{(!config.UseHttps ? $":{config.Port}" : string.Empty)}/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=1;UseDevelopmentEmulator=true;")
-        {
-            Border = BoxBorder.Double,
-            Padding = new Padding(1, 1, 1, 1)
-        };
+        var connectionStringPanel =
+            new Panel(
+                $"ConnectionString: Endpoint=sb://{config.IP}{(!config.UseHttps ? $":{config.Port}" : string.Empty)}/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=1;UseDevelopmentEmulator=true;")
+            {
+                Border = BoxBorder.Double, Padding = new Padding(1, 1, 1, 1)
+            };
         AnsiConsole.Write(connectionStringPanel);
         AnsiConsole.WriteLine();
 

@@ -19,4 +19,4 @@ AnsiConsole.Write(new Rule());
 AnsiConsole.WriteLine("");
 
 
-await CommandHandler.Handle(args, loggerFactory);
+return await CommandHandler.Handle(args, loggerFactory);
