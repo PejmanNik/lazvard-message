@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-env
 WORKDIR /App
 COPY ./src ./src
 COPY ./test ./test
@@ -8,7 +8,7 @@ RUN dotnet restore
 RUN dotnet publish -c Release -o out
 RUN mkdir -p out/config
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /App
 COPY --from=build-env /App/out .
 ENTRYPOINT ["dotnet", "Lazvard.Message.Cli.dll", "-s", "-c",  "./config/config.toml"]
