@@ -20,7 +20,7 @@
     <Authors>Pejman Nikram</Authors>
     <Description>lightweight AMQP server - Azure Service Bus simulator</Description>
     <PackageTags>amqp;service-bus;azure-service-bus;amqp-server</PackageTags>
-    <Version>0.6.0</Version>
+    <Version>0.7.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
